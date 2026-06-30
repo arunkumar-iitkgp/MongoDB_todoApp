@@ -1,0 +1,107 @@
+# =============================================================================
+#  MongoDB Deployment — Stateful storage for Todo App
+# =============================================================================
+#  Runs MongoDB 7 with a PersistentVolumeClaim for data durability.
+#  Uses readiness/liveness probes to ensure the database is ready.
+# =============================================================================
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: todo-mongodb
+  namespace: todo-app
+  labels:
+    app: todo-app
+    component: mongodb
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: todo-app
+      component: mongodb
+  strategy:
+    type: Recreate  # Recreate instead of rolling update for stateful DB
+  template:
+    metadata:
+      labels:
+        app: todo-app
+        component: mongodb
+    spec:
+      containers:
+        - name: mongodb
+          image: mongo:7
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 27017
+              name: mongodb
+          env:
+            # Optional: enable authentication (uncomment and set credentials)
+            # - name: MONGO_INITDB_ROOT_USERNAME
+            #   valueFrom:
+            #     secretKeyRef:
+            #       name: todo-app-secrets
+            #       key: mongodb-root-username
+            # - name: MONGO_INITDB_ROOT_PASSWORD
+            #   valueFrom:
+            #     secretKeyRef:
+            #       name: todo-app-secrets
+            #       key: mongodb-root-password
+            - name: MONGO_INITDB_DATABASE
+              value: todo-app
+          volumeMounts:
+            - name: mongodb-data
+              mountPath: /data/db
+            - name: mongodb-config
+              mountPath: /etc/mongod.conf
+              subPath: mongodb.conf
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "250m"
+            limits:
+              memory: "1Gi"
+              cpu: "500m"
+          livenessProbe:
+            exec:
+              command:
+                - mongosh
+                - --eval
+                - "db.adminCommand('ping')"
+            initialDelaySeconds: 30
+            periodSeconds: 15
+            timeoutSeconds: 5
+          readinessProbe:
+            exec:
+              command:
+                - mongosh
+                - --eval
+                - "db.adminCommand('ping')"
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            timeoutSeconds: 5
+      volumes:
+        - name: mongodb-data
+          persistentVolumeClaim:
+            claimName: todo-mongodb-pvc
+        - name: mongodb-config
+          configMap:
+            name: todo-app-mongodb-config
+---
+# =============================================================================
+#  PersistentVolumeClaim — MongoDB data storage
+# =============================================================================
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: todo-mongodb-pvc
+  namespace: todo-app
+  labels:
+    app: todo-app
+    component: mongodb
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi
+  # storageClassName: standard  # Use default storage class

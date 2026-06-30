@@ -1,0 +1,132 @@
+# =============================================================================
+#  Todo App Deployment — Node.js / Express / MongoDB
+# =============================================================================
+#  Runs the Todo app container with:
+#    - Rolling update strategy for zero-downtime deployments
+#    - Liveness & readiness probes matching the Docker HEALTHCHECK
+#    - Resource requests/limits for cluster scheduling
+#    - Environment variables from ConfigMap
+#    - Image pulled from the configured Docker registry
+# =============================================================================
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: todo-app
+  namespace: todo-app
+  labels:
+    app: todo-app
+    component: api
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: todo-app
+      component: api
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0  # Keep at least 1 pod running during updates
+  template:
+    metadata:
+      labels:
+        app: todo-app
+        component: api
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "3000"
+    spec:
+      # For private Docker registries, add an imagePullSecret:
+      # imagePullSecrets:
+      #   - name: docker-registry-credentials
+      containers:
+        - name: todo-app
+          # Image tag — update this when deploying a new version.
+          # For CI/CD, inject the specific build tag (e.g., build-42-abc1234)
+          # from the Jenkins pipeline. Example with envsubst:
+          #   kubectl set image deployment/todo-app todo-app=todo-app:${IMAGE_TAG}
+          # Or use kustomize with overlays for each environment.
+          #
+          # Local dev example: docker.io/yourusername/todo-app:latest
+          image: todo-app:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 3000
+              name: http
+          envFrom:
+            - configMapRef:
+                name: todo-app-config
+          # For secrets (e.g., MongoDB credentials with auth):
+          # envFrom:
+          #   - secretRef:
+          #       name: todo-app-secrets
+          env:
+            - name: PORT
+              value: "3000"
+            # Override MONGO_URI for Kubernetes — connects to internal MongoDB service
+            - name: MONGO_URI
+              value: "mongodb://todo-mongodb:27017/todo-app"
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "300m"
+          # --- Liveness Probe ---
+          # Checks if the app is alive. If it fails, Kubernetes restarts the pod.
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 3000
+            initialDelaySeconds: 15
+            periodSeconds: 20
+            timeoutSeconds: 5
+            failureThreshold: 3
+          # --- Readiness Probe ---
+          # Checks if the app is ready to serve traffic.
+          # If it fails, the pod is removed from the Service's endpoints.
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 3000
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 3
+            successThreshold: 1
+            failureThreshold: 3
+      # Graceful shutdown — gives the app time to close connections
+      terminationGracePeriodSeconds: 30
+---
+# =============================================================================
+#  HorizontalPodAutoscaler — Auto-scale based on CPU
+# =============================================================================
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: todo-app-hpa
+  namespace: todo-app
+  labels:
+    app: todo-app
+    component: api
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: todo-app
+  minReplicas: 2
+  maxReplicas: 10
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: Utilization
+          averageUtilization: 80

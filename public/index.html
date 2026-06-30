@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Todo App</title>
+  <link rel="stylesheet" href="/style.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+</head>
+<body>
+  <div class="container">
+    <header class="header">
+      <h1>📋 Todo App</h1>
+      <p class="subtitle">Powered by MongoDB - Arun Kumar</p>
+      <div class="status-badge" id="statusBadge">
+        <span class="status-dot" id="statusDot"></span>
+        <span id="statusText">Connecting...</span>
+      </div>
+    </header>
+
+    <main>
+      <form class="todo-form" id="todoForm">
+        <div class="input-group">
+          <input
+            type="text"
+            id="todoInput"
+            placeholder="What needs to be done?"
+            required
+            autocomplete="off"
+          />
+          <button type="submit" class="btn-primary">Add</button>
+        </div>
+      </form>
+
+      <div class="todo-stats" id="todoStats">
+        <span id="totalCount">0 total</span>
+        <span class="stat-separator">•</span>
+        <span id="completedCount">0 completed</span>
+        <span class="stat-separator">•</span>
+        <span id="pendingCount">0 pending</span>
+      </div>
+
+      <div class="todo-list-container">
+        <ul class="todo-list" id="todoList">
+          <!-- Todos will be rendered here -->
+        </ul>
+        <div class="empty-state" id="emptyState">
+          <div class="empty-icon">📝</div>
+          <h3>No todos yet</h3>
+          <p>Add your first todo above!</p>
+        </div>
+      </div>
+    </main>
+
+    <footer class="footer">
+      <p>Data is stored in <strong>MongoDB</strong> — you can view it in <strong>MongoDB Compass</strong></p>
+    </footer>
+  </div>
+
+  <!-- Error toast -->
+  <div class="toast" id="toast">
+    <span class="toast-icon">⚠️</span>
+    <span class="toast-message" id="toastMessage"></span>
+  </div>
+
+  <script src="/script.js"></script>
+</body>
+</html>

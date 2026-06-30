@@ -1,0 +1,94 @@
+# =============================================================================
+#  Todo App Service — Expose the app within and outside the cluster
+# =============================================================================
+#  Two services:
+#    1. todo-app (ClusterIP) — Internal access for other services/Ingress
+#    2. todo-app-nodeport (NodePort) — Direct external access for development
+# =============================================================================
+
+# ---------------------------------------------------------------------------
+#  Internal Service — ClusterIP
+#  Accessible within the cluster at: http://todo-app:3000
+#  Use with Ingress controller for production traffic routing.
+# ---------------------------------------------------------------------------
+apiVersion: v1
+kind: Service
+metadata:
+  name: todo-app
+  namespace: todo-app
+  labels:
+    app: todo-app
+    component: api
+spec:
+  type: ClusterIP
+  ports:
+    - port: 3000
+      targetPort: 3000
+      protocol: TCP
+      name: http
+  selector:
+    app: todo-app
+    component: api
+
+---
+# ---------------------------------------------------------------------------
+#  External Service — NodePort
+#  Direct access from outside the cluster (for dev/testing only).
+#  Access at: http://<node-ip>:<NodePort>
+#
+#  For production, use an Ingress controller instead (see ingress.yml example
+#  at the bottom of this file, or use a cloud load balancer).
+# ---------------------------------------------------------------------------
+apiVersion: v1
+kind: Service
+metadata:
+  name: todo-app-nodeport
+  namespace: todo-app
+  labels:
+    app: todo-app
+    component: api
+    exposure: external
+spec:
+  type: NodePort
+  ports:
+    - port: 3000
+      targetPort: 3000
+      nodePort: 30080  # Access at http://<node-ip>:30080
+      protocol: TCP
+      name: http
+  selector:
+    app: todo-app
+    component: api
+
+# =============================================================================
+#  Optional: Ingress (for production)
+# =============================================================================
+# Uncomment and configure this for production traffic routing with TLS.
+# Requires an Ingress controller (e.g., nginx-ingress, traefik, AWS ALB).
+#
+# ---
+# apiVersion: networking.k8s.io/v1
+# kind: Ingress
+# metadata:
+#   name: todo-app-ingress
+#   namespace: todo-app
+#   annotations:
+#     nginx.ingress.kubernetes.io/rewrite-target: /
+#     cert-manager.io/cluster-issuer: letsencrypt-prod
+# spec:
+#   ingressClassName: nginx
+#   tls:
+#     - hosts:
+#         - todo.yourdomain.com
+#       secretName: todo-app-tls
+#   rules:
+#     - host: todo.yourdomain.com
+#       http:
+#         paths:
+#           - path: /
+#             pathType: Prefix
+#             backend:
+#               service:
+#                 name: todo-app
+#                 port:
+#                   number: 3000

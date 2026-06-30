@@ -1,0 +1,25 @@
+# Dependencies
+node_modules/
+
+# Environment variables
+.env
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Build artifacts
+node_modules.tar.gz
+.npm-pack*
+
+# Jenkins pipeline artifacts
+.node-version
+
+# Docker artifacts
+.dockerignore
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo

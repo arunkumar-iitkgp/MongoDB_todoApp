@@ -1,0 +1,42 @@
+# =============================================================================
+#  ConfigMap — Todo App Configuration
+# =============================================================================
+#  Stores non-sensitive configuration for the Todo application.
+#  Sensitive values (like MongoDB credentials) should go in a Secret.
+# =============================================================================
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: todo-app-config
+  namespace: todo-app
+  labels:
+    app: todo-app
+    component: config
+data:
+  # Application settings
+  NODE_ENV: "production"
+  PORT: "3000"
+
+  # MongoDB connection string (without credentials)
+  # If using the internal MongoDB service from mongodb-service.yml:
+  MONGO_URI: "mongodb://todo-mongodb:27017/todo-app"
+
+  # For external MongoDB, override this at deploy time:
+  # kubectl set env deployment/todo-app MONGO_URI=mongodb://your-host:27017/todo-app
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: todo-app-mongodb-config
+  namespace: todo-app
+  labels:
+    app: todo-app
+    component: mongodb
+data:
+  mongodb.conf: |
+    storage:
+      dbPath: /data/db
+    net:
+      bindIp: 0.0.0.0
+      port: 27017

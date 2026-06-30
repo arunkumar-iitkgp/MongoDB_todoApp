@@ -1,0 +1,15 @@
+# =============================================================================
+#  Namespace — Isolated environment for Todo App
+# =============================================================================
+#  All Todo app resources are deployed into this namespace.
+#  Apply this first before any other manifest:
+#    kubectl apply -f k8s/namespace.yml
+# =============================================================================
+
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: todo-app
+  labels:
+    app: todo-app
+    environment: production
