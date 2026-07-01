@@ -1,25 +1,23 @@
-# Rewriting the script ensuring clean syntax
-with open("Jenkinsfile", "w", encoding="utf-8") as f:
-    f.write('''/*
+/*
  * ============================================================
- * Jenkinsfile — Todo App (Node.js / Express / MongoDB)
+ *  Jenkinsfile — Todo App (Node.js / Express / MongoDB)
  * ============================================================
- * Pipeline checks included:
- * 1. Checkout (SCM)            2. Install Dependencies
- * 3. Code Quality Checks (parallel) — Lint / Security / Tests
- * 4. Build Check (syntax)       5. Docker Build
- * 6. Docker Push (main only)    7. Post (cleanup + notify)
+ *  Pipeline checks included:
+ *     1. Checkout (SCM)            2. Install Dependencies
+ *     3. Code Quality Checks (parallel) — Lint / Security / Tests
+ *     4. Build Check (syntax)       5. Docker Build
+ *     6. Docker Push (main only)    7. Post (cleanup + notify)
  * ============================================================
  *
- * Prerequisites for Docker stages:
- * - Jenkins credentials:
- * • 'docker-registry-credentials' (Username with Password type)
- * — OR — update the `withCredentials` block to match your setup
- * • Docker must be installed on the Jenkins node
- * - Environment variables (set in Jenkins or via credentials):
- * • IMAGE_NAME    — Docker image name (default: 'todo-app')
- * • IMAGE_TAG     — Override image tag (default: build number + commit)
- * • DOCKER_REGISTRY — Registry host (default: Docker Hub, no prefix)
+ *  Prerequisites for Docker stages:
+ *   - Jenkins credentials:
+ *       • 'docker-registry-credentials' (Username with Password type)
+ *         — OR — update the `withCredentials` block to match your setup
+ *       • Docker must be installed on the Jenkins node
+ *   - Environment variables (set in Jenkins or via credentials):
+ *       • IMAGE_NAME    — Docker image name (default: 'todo-app')
+ *       • IMAGE_TAG     — Override image tag (default: build number + commit)
+ *       • DOCKER_REGISTRY — Registry host (default: Docker Hub, no prefix)
  * ============================================================
  */
 
@@ -54,6 +52,8 @@ pipeline {
     triggers {
         // Poll SCM every 5 minutes (or use webhooks — preferred)
         pollSCM('H/5 * * * *')
+
+        // Trigger on push to main branch (requires webhook configured)
     }
 
     // ------------------------------------------------------------------
@@ -107,10 +107,10 @@ pipeline {
                 }
             }
             steps {
-                sh \'\'\'
+                sh '''
                     echo "📦 Installing dependencies..."
                     npm ci --ignore-scripts
-                \'\'\'
+                '''
             }
             post {
                 failure {
@@ -136,10 +136,10 @@ pipeline {
                         expression { fileExists('.eslintrc.json') || fileExists('.eslintrc.js') || fileExists('.eslintrc') }
                     }
                     steps {
-                        sh \'\'\'
+                        sh '''
                             echo "🔍 Running ESLint..."
                             npx eslint . --max-warnings=50
-                        \'\'\'
+                        '''
                     }
                     post {
                         failure {
@@ -160,10 +160,10 @@ pipeline {
                         }
                     }
                     steps {
-                        sh \'\'\'
+                        sh '''
                             echo "🔒 Running npm security audit..."
                             npm audit --audit-level=high
-                        \'\'\'
+                        '''
                     }
                     post {
                         failure {
@@ -184,10 +184,10 @@ pipeline {
                         }
                     }
                     steps {
-                        sh \'\'\'
+                        sh '''
                             echo "🧪 Running unit tests..."
                             npm test
-                        \'\'\'
+                        '''
                     }
                     post {
                         failure {
@@ -210,13 +210,13 @@ pipeline {
                 }
             }
             steps {
-                sh \'\'\'
+                sh '''
                     echo "🔧 Running syntax validation..."
                     node --check server.js
                     node --check routes/todos.js
                     node --check models/Todo.js
                     echo "✅ All files passed syntax check"
-                \'\'\'
+                '''
             }
             post {
                 failure {
@@ -230,7 +230,6 @@ pipeline {
         // because they need access to the host's Docker daemon.
         // The Jenkins node must have Docker CLI installed.
         stage('5. Docker Build') {
-            agent any // FIX: Explicitly declaration needed since global agent is 'none'
             when {
                 branch 'main'
             }
@@ -246,14 +245,14 @@ pipeline {
                     echo "🐳 Building Docker image: ${fullImageName}"
 
                     sh """
-                        docker build \\
-                            --pull \\
-                            --label "BUILD_NUMBER=${env.BUILD_NUMBER}" \\
-                            --label "GIT_COMMIT=${env.GIT_COMMIT}" \\
-                            --label "BUILD_URL=${env.BUILD_URL}" \\
-                            -t ${fullImageName} \\
-                            -t ${latestTag} \\
-                            -f Dockerfile \\
+                        docker build \
+                            --pull \
+                            --label "BUILD_NUMBER=${env.BUILD_NUMBER}" \
+                            --label "GIT_COMMIT=${env.GIT_COMMIT}" \
+                            --label "BUILD_URL=${env.BUILD_URL}" \
+                            -t ${fullImageName} \
+                            -t ${latestTag} \
+                            -f Dockerfile \
                             .
                     """
 
@@ -272,7 +271,6 @@ pipeline {
 
         // ---- Stage 6: Docker Push ----------------------------------
         stage('6. Docker Push') {
-            agent any // FIX: Explicitly declaration needed since global agent is 'none'
             when {
                 branch 'main'
             }
@@ -293,13 +291,13 @@ pipeline {
                             passwordVariable: 'REGISTRY_PASS'
                         )
                     ]) {
-                        sh \'\'\'
+                        sh '''
                             echo "🔑 Logging into Docker registry..."
-                            echo "${REGISTRY_PASS}" | docker login \\
-                                ${DOCKER_REGISTRY:+"$DOCKER_REGISTRY"} \\
-                                -u "${REGISTRY_USER}" \\
+                            echo "${REGISTRY_PASS}" | docker login \
+                                ${DOCKER_REGISTRY:+"$DOCKER_REGISTRY"} \
+                                -u "${REGISTRY_USER}" \
                                 --password-stdin
-                        \'\'\'
+                        '''
 
                         echo "📤 Pushing tagged image: ${taggedImage}"
                         sh "docker push ${taggedImage}"
@@ -314,6 +312,9 @@ pipeline {
             post {
                 success {
                     echo "✅ Image pushed: ${env.DOCKER_IMAGE}:${env.IMAGE_TAG}"
+                    // Uncomment to record the image URL as a build badge:
+                    // writeFile file: 'image.txt', text: "${env.DOCKER_IMAGE}:${env.IMAGE_TAG}"
+                    // archiveArtifacts artifacts: 'image.txt'
                 }
                 failure {
                     error '❌ Docker push failed — check registry credentials and connectivity'
@@ -328,17 +329,27 @@ pipeline {
     post {
         // Always clean up the workspace
         always {
-            node { // FIX: Wrapped cleanWs() in a node block to provide an active node context under 'agent none'
-                cleanWs()
-            }
+            cleanWs()
         }
 
         success {
             echo '✅ Pipeline completed successfully!'
+            // Uncomment to send a Slack notification:
+            // slackSend(
+            //     color: '#00FF00',
+            //     message: "✅ ${env.JOB_NAME} - Build #${env.BUILD_NUMBER} succeeded\n" +
+            //              "📦 Image: ${env.DOCKER_IMAGE}:${env.IMAGE_TAG}\n" +
+            //              "🔗 <${env.BUILD_URL}|Open Build>"
+            // )
         }
 
         failure {
             echo '❌ Pipeline failed — check the logs above for details'
+            // Uncomment to send a Slack notification:
+            // slackSend(
+            //     color: '#FF0000',
+            //     message: "❌ ${env.JOB_NAME} - Build #${env.BUILD_NUMBER} failed (<${env.BUILD_URL}|Open>)"
+            // )
         }
 
         unstable {
@@ -350,5 +361,3 @@ pipeline {
         }
     }
 }
-''')
-print("File written successfully.")
