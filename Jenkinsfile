@@ -329,7 +329,11 @@ pipeline {
     post {
         // Always clean up the workspace
         always {
-            cleanWs()
+            script {
+                node {
+                    cleanWs()
+                }
+            }
         }
 
         success {
