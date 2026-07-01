@@ -34,7 +34,7 @@ pipeline {
     // ------------------------------------------------------------------
     environment {
         // MongoDB connection string — prefer a Jenkins-provided value, otherwise use the local fallback
-        MONGO_URI = env.MONGO_URI ?: 'mongodb://localhost:27017/todo-app'
+        MONGO_URI = 'mongodb://localhost:27017/todo-app'
 
         // Docker image configuration
         IMAGE_NAME = 'arunkumariitkgp/mongodb-todoapp'
