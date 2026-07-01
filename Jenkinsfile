@@ -33,11 +33,11 @@ pipeline {
     // Environment variables
     // ------------------------------------------------------------------
     environment {
-        // MongoDB connection string — provided via Jenkins Credentials
-        MONGO_URI = credentials('mongo-uri')
+        // MongoDB connection string — prefer a Jenkins-provided value, otherwise use the local fallback
+        MONGO_URI = env.MONGO_URI ?: 'mongodb://localhost:27017/todo-app'
 
         // Docker image configuration
-        IMAGE_NAME = 'todo-app'
+        IMAGE_NAME = 'arunkumariitkgp/mongodb-todoapp'
         IMAGE_TAG  = "${env.BUILD_NUMBER}-${env.GIT_COMMIT?.take(7) ?: 'latest'}"
         // DOCKER_REGISTRY = 'my-registry.example.com'  // uncomment for private registry
         DOCKER_REGISTRY = ''  // empty = Docker Hub
