@@ -38,7 +38,7 @@ pipeline {
 
         // Docker image configuration
         IMAGE_NAME = 'arunkumariitkgp/mongodb-todoapp'
-        IMAGE_TAG  = "${env.BUILD_NUMBER}-${env.GIT_COMMIT?.take(7) ?: 'latest'}"
+        IMAGE_TAG  = 'latest'
         // DOCKER_REGISTRY = 'my-registry.example.com'  // uncomment for private registry
         DOCKER_REGISTRY = ''  // empty = Docker Hub
 
@@ -235,6 +235,8 @@ pipeline {
             }
             steps {
                 script {
+                    env.IMAGE_TAG = "${env.BUILD_NUMBER}-${env.GIT_COMMIT?.take(7) ?: 'latest'}"
+
                     // Verify Docker is available before proceeding
                     sh 'docker info > /dev/null 2>&1 || { echo "❌ Docker is not available on this node"; exit 1; }'
 
@@ -279,6 +281,8 @@ pipeline {
             }
             steps {
                 script {
+                    env.IMAGE_TAG = "${env.BUILD_NUMBER}-${env.GIT_COMMIT?.take(7) ?: 'latest'}"
+
                     def registryPrefix = env.DOCKER_REGISTRY ? "${env.DOCKER_REGISTRY}/" : ''
                     def taggedImage = "${registryPrefix}${env.IMAGE_NAME}:${env.IMAGE_TAG}"
                     def latestImage = "${registryPrefix}${env.IMAGE_NAME}:latest"
