@@ -331,9 +331,7 @@ pipeline {
     post {
         // Always clean up the workspace
         always {
-            node {
-                cleanWs()
-            }
+            cleanWs()
         }
 
         success {
