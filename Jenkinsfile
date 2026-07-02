@@ -23,11 +23,11 @@
 
 pipeline {
     // ------------------------------------------------------------------
-    // Agent: use 'none' so we can set per-stage agents
-    //   - Code stages (1-4): run inside the node:20-alpine Docker image
+    // Agent: use 'any' so post actions and host Docker stages can run
+    //   - Code stages (1-4): run inside the node:22-bullseye Docker image
     //   - Docker stages (5-6): run on the Jenkins node directly (needs Docker)
     // ------------------------------------------------------------------
-    agent none
+    agent any
 
     // ------------------------------------------------------------------
     // Environment variables
@@ -331,11 +331,7 @@ pipeline {
     post {
         // Always clean up the workspace
         always {
-            script {
-                node {
-                    cleanWs()
-                }
-            }
+            cleanWs()
         }
 
         success {
