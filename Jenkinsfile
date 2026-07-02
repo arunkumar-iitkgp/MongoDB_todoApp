@@ -70,9 +70,6 @@ pipeline {
         // Keep only the last 10 builds
         buildDiscarder(logRotator(numToKeepStr: '10'))
 
-        // Skip default checkout — we do it explicitly in the first stage
-        skipDefaultCheckout true
-
         // Retry the build once on agent failure
         retry(1)
     }
@@ -334,11 +331,7 @@ pipeline {
     post {
         // Always clean up the workspace
         always {
-            script {
-                node {
-                    cleanWs()
-                }
-            }
+            cleanWs()
         }
 
         success {
