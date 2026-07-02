@@ -8,9 +8,14 @@ let mongoServer;
  * Each test run gets a fresh, isolated database.
  */
 const connect = async () => {
-  mongoServer = await MongoMemoryServer.create();
-  const uri = mongoServer.getUri();
-  await mongoose.connect(uri);
+    const mongoServer = await MongoMemoryServer.create({
+        binary: {
+            version: '7.0.12'
+        }
+    });
+
+    const uri = mongoServer.getUri();
+    await mongoose.connect(uri);
 };
 
 /**
