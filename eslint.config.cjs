@@ -1,14 +1,15 @@
+const globals = require('globals');
+
 module.exports = [
   {
     files: ['**/*.js'],
     languageOptions: {
       ecmaVersion: 2022,
-      sourceType: 'script'
-    },
-    env: {
-      node: true,
-      browser: true,
-      es2022: true
+      sourceType: 'script',
+      globals: {
+        ...globals.node,
+        ...globals.browser,
+      }
     },
     rules: {
       'no-unused-vars': ['warn', { argsIgnorePattern: '^_' }],

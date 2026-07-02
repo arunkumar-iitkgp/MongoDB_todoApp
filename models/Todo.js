@@ -13,7 +13,7 @@ const subItemSchema = new mongoose.Schema(
       default: false,
     },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 const todoSchema = new mongoose.Schema(
@@ -35,7 +35,7 @@ const todoSchema = new mongoose.Schema(
   },
   {
     timestamps: true, // adds createdAt and updatedAt fields
-  }
+  },
 );
 
 module.exports = mongoose.model('Todo', todoSchema);

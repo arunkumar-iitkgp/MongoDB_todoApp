@@ -316,7 +316,7 @@ describe('Todo API — /api/todos', () => {
 
       expect(res.status).toBe(200);
       const updated = res.body.subItems.find(
-        (s) => s._id.toString() === subItem._id.toString()
+        (s) => s._id.toString() === subItem._id.toString(),
       );
       expect(updated.title).toBe('Updated sub-task');
     });
@@ -328,7 +328,7 @@ describe('Todo API — /api/todos', () => {
 
       expect(res.status).toBe(200);
       const updated = res.body.subItems.find(
-        (s) => s._id.toString() === subItem._id.toString()
+        (s) => s._id.toString() === subItem._id.toString(),
       );
       expect(updated.completed).toBe(true);
     });
@@ -430,7 +430,7 @@ describe('Todo API — /api/todos', () => {
         .send({ completed: true });
       expect(toggleSubRes.status).toBe(200);
       const toggledSub = toggleSubRes.body.subItems.find(
-        (s) => s._id.toString() === sub1Id.toString()
+        (s) => s._id.toString() === sub1Id.toString(),
       );
       expect(toggledSub.completed).toBe(true);
 

@@ -771,15 +771,15 @@ async function generatePDF() {
   });
 
   const page = await browser.newPage();
-  
+
   // Set content and wait for fonts to load
   await page.setContent(htmlContent, { waitUntil: 'networkidle0' });
-  
+
   // Give fonts time to render
   await page.evaluate(() => document.fonts.ready);
 
   const outputPath = path.join(__dirname, '..', 'Todo-App-CI-CD-Setup-Guide.pdf');
-  
+
   console.log('📄 Generating PDF...');
   await page.pdf({
     path: outputPath,
