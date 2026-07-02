@@ -82,7 +82,7 @@ pipeline {
         stage('1. Checkout') {
             agent {
                 docker {
-                    image 'node:20-alpine'
+                    image 'node:22-bullseye'
                     args '-v /etc/ssl/certs:/etc/ssl/certs:ro'
                 }
             }
@@ -100,7 +100,7 @@ pipeline {
         stage('2. Install Dependencies') {
             agent {
                 docker {
-                    image 'node:20-alpine'
+                    image 'node:22-bullseye'
                     args '-v /etc/ssl/certs:/etc/ssl/certs:ro'
                 }
             }
@@ -126,7 +126,7 @@ pipeline {
                 stage('Lint') {
                     agent {
                         docker {
-                            image 'node:20-alpine'
+                            image 'node:22-bullseye'
                             args '-v /etc/ssl/certs:/etc/ssl/certs:ro'
                         }
                     }
@@ -153,7 +153,7 @@ pipeline {
                 stage('Security') {
                     agent {
                         docker {
-                            image 'node:20-alpine'
+                            image 'node:22-bullseye'
                             args '-v /etc/ssl/certs:/etc/ssl/certs:ro'
                         }
                     }
@@ -177,7 +177,7 @@ pipeline {
                 stage('Tests') {
                     agent {
                         docker {
-                            image 'node:20-alpine'
+                            image 'node:22-bullseye'
                             args '-v /etc/ssl/certs:/etc/ssl/certs:ro'
                         }
                     }
@@ -331,7 +331,9 @@ pipeline {
     post {
         // Always clean up the workspace
         always {
-            cleanWs()
+            node {
+                cleanWs()
+            }
         }
 
         success {
