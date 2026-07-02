@@ -329,10 +329,13 @@ pipeline {
     // Post-build actions
     // ------------------------------------------------------------------
     post {
-        // Always clean up the workspace
         always {
+        node {
             cleanWs()
+            // Any other post steps you have, like echo statements
+            echo '❌ Pipeline failed — check the logs above for details'
         }
+    }
 
         success {
             echo '✅ Pipeline completed successfully!'
